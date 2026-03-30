@@ -50,7 +50,7 @@ export function DashboardSections() {
         <strong>84%</strong>
       </article>
 
-      <article className="mv-card">
+      <article className="mv-card mv-orbit-drift-card">
         <h3 className="mv-section-title">
           <Image src="/icons/Container.svg" alt="轨道图标" width={18} height={10} />
           轨道漂移

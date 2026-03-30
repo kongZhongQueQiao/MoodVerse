@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("123456");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<ToastState>({ message: "", visible: false });
+  const [isCreating, setIsCreating] = useState(false);
 
   const emailError = useMemo(() => {
     if (!email) return "";
@@ -44,17 +45,18 @@ export default function LoginPage() {
       const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, action: isCreating ? "create" : "login" }),
       });
 
       const result: { success?: boolean; message?: string } = await response.json();
 
       if (response.ok && result.success) {
-        router.push("/");
+        showToast(isCreating ? "创建完成" : "登录成功");
+        window.setTimeout(() => router.push("/"), 400);
         return;
       }
 
-      showToast(result.message ?? "登录失败");
+      showToast(result.message ?? (isCreating ? "创建失败" : "登录失败"));
     } catch {
       showToast("网络异常，请稍后再试");
     } finally {
@@ -66,15 +68,16 @@ export default function LoginPage() {
     <div className="mv-auth-root">
       <div className="mv-auth-mask" />
 
+      <p className="mv-auth-brand">★ MOODVERSE</p>
+
       <main className="mv-auth-card">
-        <p className="mv-auth-brand">★ MOODVERSE</p>
-        <h1>观星者，欢迎回来</h1>
-        <p className="mv-auth-subtitle">开启您的星际情绪之旅</p>
+        <h1>{isCreating ? "创建您的星际身份" : "观星者，欢迎回来"}</h1>
+        <p className="mv-auth-subtitle">{isCreating ? "收集您的星际邮箱与密码" : "开启您的星际情绪之旅"}</p>
 
         <form onSubmit={handleSubmit} className="mv-auth-form" noValidate>
           <label>
-            电子邮箱
-            <span>示例账号</span>
+            {isCreating ? "收集邮箱" : "电子邮箱"}
+            <span>{isCreating ? "用于创建新的星屿" : "示例账号"}</span>
           </label>
           <div className="mv-auth-input-wrap">
             <Mail size={14} />
@@ -83,13 +86,13 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="example@gmail.com"
+              placeholder={isCreating ? "收集邮箱" : "example@gmail.com"}
             />
           </div>
 
           <label>
-            密码
-            <span>6位数字</span>
+            {isCreating ? "收集密码" : "密码"}
+            <span>{isCreating ? "至少6位字符" : "6位数字"}</span>
           </label>
           <div className="mv-auth-input-wrap">
             <Lock size={14} />
@@ -98,19 +101,32 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••"
+              placeholder={isCreating ? "收集密码" : "••••••"}
             />
           </div>
 
           {emailError ? <p className="mv-auth-error">{emailError}</p> : null}
 
           <button type="submit" className="mv-auth-submit" disabled={loading}>
-            {loading ? "进入中..." : "进入宇宙"}
+            {loading ? (isCreating ? "创建中..." : "进入中...") : isCreating ? "创建宇宙" : "进入宇宙"}
           </button>
         </form>
 
         <div className="mv-auth-orbit">ORBITING</div>
-        <p className="mv-auth-create">创建新的星屿 →</p>
+        <p
+          className="mv-auth-create"
+          role="button"
+          tabIndex={0}
+          onClick={() => setIsCreating(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setIsCreating(true);
+            }
+          }}
+        >
+          {isCreating ? "正在创建新的星屿" : "创建新的星屿 →"}
+        </p>
       </main>
 
       <div className="mv-auth-bottom">
