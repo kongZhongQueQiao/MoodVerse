@@ -1,40 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Range, getTrackBackground } from "react-range";
 import { Droplets, Sparkles, Cloud, Zap, HeartPulse, MoonStar, Flame, ShieldCheck } from "lucide-react";
+import { MOOD_META } from "@/app/lib/mood-meta";
+
+const PlanetCore = dynamic(
+  () => import("@/app/components/planet-core").then((module) => module.PlanetCore),
+  { ssr: false },
+);
 
 const moods = [
-  { key: "joy", label: "喜悦", icon: Sparkles, color: "#d64eff" },
-  { key: "calm", label: "冷静", icon: Droplets, color: "#22d3ee" },
-  { key: "focus", label: "活力", icon: Zap, color: "#9f67ff" },
-  { key: "sad", label: "沉思", icon: Cloud, color: "#7392ff" },
+  { key: "joy", label: MOOD_META.joy.label, icon: Sparkles, color: MOOD_META.joy.color },
+  { key: "calm", label: MOOD_META.calm.label, icon: Droplets, color: MOOD_META.calm.color },
+  { key: "focus", label: MOOD_META.focus.label, icon: Zap, color: MOOD_META.focus.color },
+  { key: "sad", label: MOOD_META.sad.label, icon: Cloud, color: MOOD_META.sad.color },
 ] as const;
 
 const planetStyles = {
   joy: {
-    background:
-      "radial-gradient(circle at 43% 30%, #f9a5ff 0%, #d24eff 45%, #5b0ca4 100%), radial-gradient(circle at 60% 56%, rgba(34, 226, 255, 0.7), transparent 70%)",
-    boxShadow: "0 0 44px rgba(214, 86, 255, 0.6), inset 0 -10px 36px rgba(44, 7, 93, 0.6)",
     labelColor: "#d64eff",
   },
   calm: {
-    background:
-      "radial-gradient(circle at 43% 30%, #8bf7ff 0%, #22d3ee 46%, #0f3e88 100%), radial-gradient(circle at 62% 56%, rgba(123, 224, 255, 0.7), transparent 70%)",
-    boxShadow: "0 0 44px rgba(34, 211, 238, 0.5), inset 0 -10px 36px rgba(7, 40, 93, 0.55)",
     labelColor: "#22d3ee",
   },
   focus: {
-    background:
-      "radial-gradient(circle at 43% 30%, #d2b4ff 0%, #9f67ff 45%, #4520a7 100%), radial-gradient(circle at 62% 56%, rgba(173, 120, 255, 0.68), transparent 70%)",
-    boxShadow: "0 0 44px rgba(159, 103, 255, 0.55), inset 0 -10px 36px rgba(43, 20, 99, 0.58)",
     labelColor: "#9f67ff",
   },
   sad: {
-    background:
-      "radial-gradient(circle at 43% 30%, #c7d6ff 0%, #7392ff 46%, #243f99 100%), radial-gradient(circle at 62% 56%, rgba(122, 173, 255, 0.66), transparent 70%)",
-    boxShadow: "0 0 44px rgba(115, 146, 255, 0.52), inset 0 -10px 36px rgba(18, 37, 98, 0.55)",
     labelColor: "#7392ff",
   },
 } as const;
@@ -46,13 +43,30 @@ const metrics = [
   { key: "stability", label: "神经稳定性", icon: ShieldCheck, color: "#9f67ff" },
 ] as const;
 
+const triggerTags = ["通勤", "工作", "关系", "睡眠", "运动", "饮食"] as const;
+
+type MoodSummaryResponse = {
+  success?: boolean;
+  count?: number;
+};
+
 export default function MoodCapturePage() {
+  const router = useRouter();
   const [selectedMood, setSelectedMood] = useState<(typeof moods)[number]["key"]>("joy");
   const [hoveredMood, setHoveredMood] = useState<(typeof moods)[number]["key"] | null>(null);
   const [heartRate, setHeartRate] = useState(72);
   const [sleep, setSleep] = useState(72);
   const [energy, setEnergy] = useState(84);
   const [stability, setStability] = useState(94);
+  const [note, setNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState("");
+  const [recordCount, setRecordCount] = useState<number | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>(["工作"]);
+
+  const metricStyle = (color: string) => ({
+    ["--metric-color" as string]: color,
+  });
 
   const displayMood = hoveredMood ?? selectedMood;
 
@@ -63,13 +77,101 @@ export default function MoodCapturePage() {
 
   const planetStyle = planetStyles[displayMood];
 
+  useEffect(() => {
+    let active = true;
+
+    const loadCount = async () => {
+      try {
+        const response = await fetch("/api/mood", { cache: "no-store" });
+        if (!response.ok) {
+          if (active) setRecordCount(0);
+          return;
+        }
+
+        const data = (await response.json()) as MoodSummaryResponse;
+        if (active) {
+          setRecordCount(typeof data.count === "number" ? data.count : 0);
+        }
+      } catch {
+        if (active) setRecordCount(0);
+      }
+    };
+
+    void loadCount();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSubmitMood = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/mood", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mood: selectedMood,
+          heartRate,
+          sleep,
+          energy,
+          stability,
+          note,
+          tags: selectedTags.length ? selectedTags : ["未标记"],
+        }),
+      });
+
+  const result = (await response.json()) as { success?: boolean; message?: string; count?: number };
+
+      if (!response.ok || !result.success) {
+        setToast(result.message ?? "记录失败，请稍后重试");
+        return;
+      }
+
+      if (typeof result.count === "number") {
+        setRecordCount(result.count);
+      }
+
+      setToast("记录成功");
+      window.setTimeout(() => {
+        router.replace("/");
+      }, 500);
+    } catch {
+      setToast("记录失败，请稍后重试");
+    } finally {
+      setIsSubmitting(false);
+      window.setTimeout(() => {
+        setToast("");
+      }, 1800);
+    }
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) => {
+      if (prev.includes(tag)) {
+        return prev.filter((item) => item !== tag);
+      }
+
+      if (prev.length >= 3) {
+        return [...prev.slice(1), tag];
+      }
+
+      return [...prev, tag];
+    });
+  };
+
   return (
     <div className="mv-root">
       <section className="mv-phone mv-capture-screen">
         <header className="mv-capture-top">
           <Link href="/mood" className="mv-close-btn" aria-label="关闭">✕</Link>
           <p>MoodVerse</p>
-          <span>2/5 · 记录中</span>
+          <span>{recordCount ?? "--"} 条 · 记录中</span>
         </header>
 
         <main className="mv-content mv-capture-content">
@@ -79,7 +181,7 @@ export default function MoodCapturePage() {
             animate={{ scale: [1, 1.02, 1] }}
             transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           >
-            <div className="mv-capture-planet" style={{ background: planetStyle.background, boxShadow: planetStyle.boxShadow }} />
+            <PlanetCore moodKey={displayMood} />
             <p style={{ color: planetStyle.labelColor }}>{moodTitle} 星核</p>
           </motion.div>
 
@@ -111,7 +213,7 @@ export default function MoodCapturePage() {
           </section>
 
           <section className="mv-stat-list mv-capture-stat-list">
-            <label className="mv-slider mv-capture-slider" style={{ ["--metric-color" as string]: metrics[0].color }}>
+            <label className="mv-slider mv-capture-slider" style={metricStyle(metrics[0].color)}>
               <div className="mv-capture-slider-head">
                 <span className="mv-capture-slider-label">
                   <HeartPulse size={13} />
@@ -122,9 +224,48 @@ export default function MoodCapturePage() {
                   {heartRate}
                 </strong>
               </div>
-              <input type="range" min={40} max={140} value={heartRate} onChange={(event) => setHeartRate(Number(event.target.value))} />
+              <Range
+                step={1}
+                min={40}
+                max={140}
+                values={[heartRate]}
+                onChange={(values) => setHeartRate(values[0] ?? 40)}
+                renderTrack={({ props, children }) => (
+                  <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
+                    <div
+                      ref={props.ref}
+                      className="mv-capture-range-track"
+                      style={{
+                        background: getTrackBackground({
+                          values: [heartRate],
+                          colors: [`${metrics[0].color}CC`, "rgba(173, 181, 214, 0.34)"],
+                          min: 40,
+                          max: 140,
+                        }),
+                      }}
+                    >
+                      {children}
+                    </div>
+                  </div>
+                )}
+                renderThumb={({ props }) => {
+                  const { key, ...thumbProps } = props;
+                  return (
+                    <div
+                      key={key}
+                      {...thumbProps}
+                      className="mv-capture-range-thumb"
+                      style={{
+                        ...props.style,
+                        background: metrics[0].color,
+                        boxShadow: `0 0 6px ${metrics[0].color}66`,
+                      }}
+                    />
+                  );
+                }}
+              />
             </label>
-            <label className="mv-slider mv-capture-slider" style={{ ["--metric-color" as string]: metrics[1].color }}>
+            <label className="mv-slider mv-capture-slider" style={metricStyle(metrics[1].color)}>
               <div className="mv-capture-slider-head">
                 <span className="mv-capture-slider-label">
                   <MoonStar size={13} />
@@ -135,9 +276,48 @@ export default function MoodCapturePage() {
                   {sleep}%
                 </strong>
               </div>
-              <input type="range" min={10} max={100} value={sleep} onChange={(event) => setSleep(Number(event.target.value))} />
+              <Range
+                step={1}
+                min={10}
+                max={100}
+                values={[sleep]}
+                onChange={(values) => setSleep(values[0] ?? 10)}
+                renderTrack={({ props, children }) => (
+                  <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
+                    <div
+                      ref={props.ref}
+                      className="mv-capture-range-track"
+                      style={{
+                        background: getTrackBackground({
+                          values: [sleep],
+                          colors: [`${metrics[1].color}CC`, "rgba(173, 181, 214, 0.34)"],
+                          min: 10,
+                          max: 100,
+                        }),
+                      }}
+                    >
+                      {children}
+                    </div>
+                  </div>
+                )}
+                renderThumb={({ props }) => {
+                  const { key, ...thumbProps } = props;
+                  return (
+                    <div
+                      key={key}
+                      {...thumbProps}
+                      className="mv-capture-range-thumb"
+                      style={{
+                        ...props.style,
+                        background: metrics[1].color,
+                        boxShadow: `0 0 6px ${metrics[1].color}66`,
+                      }}
+                    />
+                  );
+                }}
+              />
             </label>
-            <label className="mv-slider mv-capture-slider" style={{ ["--metric-color" as string]: metrics[2].color }}>
+            <label className="mv-slider mv-capture-slider" style={metricStyle(metrics[2].color)}>
               <div className="mv-capture-slider-head">
                 <span className="mv-capture-slider-label">
                   <Flame size={13} />
@@ -148,9 +328,48 @@ export default function MoodCapturePage() {
                   {Math.round((energy / 100) * 2800)} kcal
                 </strong>
               </div>
-              <input type="range" min={10} max={100} value={energy} onChange={(event) => setEnergy(Number(event.target.value))} />
+              <Range
+                step={1}
+                min={10}
+                max={100}
+                values={[energy]}
+                onChange={(values) => setEnergy(values[0] ?? 10)}
+                renderTrack={({ props, children }) => (
+                  <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
+                    <div
+                      ref={props.ref}
+                      className="mv-capture-range-track"
+                      style={{
+                        background: getTrackBackground({
+                          values: [energy],
+                          colors: [`${metrics[2].color}CC`, "rgba(173, 181, 214, 0.34)"],
+                          min: 10,
+                          max: 100,
+                        }),
+                      }}
+                    >
+                      {children}
+                    </div>
+                  </div>
+                )}
+                renderThumb={({ props }) => {
+                  const { key, ...thumbProps } = props;
+                  return (
+                    <div
+                      key={key}
+                      {...thumbProps}
+                      className="mv-capture-range-thumb"
+                      style={{
+                        ...props.style,
+                        background: metrics[2].color,
+                        boxShadow: `0 0 6px ${metrics[2].color}66`,
+                      }}
+                    />
+                  );
+                }}
+              />
             </label>
-            <label className="mv-slider mv-capture-slider" style={{ ["--metric-color" as string]: metrics[3].color }}>
+            <label className="mv-slider mv-capture-slider" style={metricStyle(metrics[3].color)}>
               <div className="mv-capture-slider-head">
                 <span className="mv-capture-slider-label">
                   <ShieldCheck size={13} />
@@ -161,20 +380,83 @@ export default function MoodCapturePage() {
                   {stability}%
                 </strong>
               </div>
-              <input type="range" min={20} max={100} value={stability} onChange={(event) => setStability(Number(event.target.value))} />
+              <Range
+                step={1}
+                min={20}
+                max={100}
+                values={[stability]}
+                onChange={(values) => setStability(values[0] ?? 20)}
+                renderTrack={({ props, children }) => (
+                  <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
+                    <div
+                      ref={props.ref}
+                      className="mv-capture-range-track"
+                      style={{
+                        background: getTrackBackground({
+                          values: [stability],
+                          colors: [`${metrics[3].color}CC`, "rgba(173, 181, 214, 0.34)"],
+                          min: 20,
+                          max: 100,
+                        }),
+                      }}
+                    >
+                      {children}
+                    </div>
+                  </div>
+                )}
+                renderThumb={({ props }) => {
+                  const { key, ...thumbProps } = props;
+                  return (
+                    <div
+                      key={key}
+                      {...thumbProps}
+                      className="mv-capture-range-thumb"
+                      style={{
+                        ...props.style,
+                        background: metrics[3].color,
+                        boxShadow: `0 0 6px ${metrics[3].color}66`,
+                      }}
+                    />
+                  );
+                }}
+              />
             </label>
           </section>
 
-          <textarea className="mv-note-box mv-capture-note-box" rows={3} placeholder="今天有什么事件触发了这个情绪？" />
+          <textarea
+            className="mv-note-box mv-capture-note-box"
+            rows={3}
+            placeholder="今天有什么事件触发了这个情绪？"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+          />
 
           <div className="mv-chip-row">
-            <span>通勤</span>
-            <span>工作</span>
-            <span>关系</span>
-            <span>睡眠</span>
+            {triggerTags.map((tag) => {
+              const active = selectedTags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  className={`mv-chip ${active ? "active" : ""}`}
+                  onClick={() => toggleTag(tag)}
+                >
+                  {tag}
+                </button>
+              );
+            })}
           </div>
 
-          <button className="mv-btn mv-btn-primary mv-submit">记录情绪</button>
+          <button
+            className="mv-btn mv-btn-primary mv-submit"
+            type="button"
+            onClick={handleSubmitMood}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "记录中..." : "记录情绪"}
+          </button>
+
+          <p className={`mv-auth-toast ${toast ? "show" : ""}`}>{toast}</p>
         </main>
       </section>
     </div>

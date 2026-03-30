@@ -1,7 +1,8 @@
 "use client";
 
 import { AppShell } from "@/app/components/app-shell";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles, Wind } from "lucide-react";
+import { Range, getTrackBackground } from "react-range";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -115,30 +116,105 @@ export default function SettingsPage() {
     <AppShell title="系统配置" subtitle="个性化你的星系体验设置。">
       <article className="mv-card">
         <h3>视觉亮度</h3>
-        <div className="mv-setting-row">
-          <span>银河辉光强度</span>
-          <strong>{galaxyGlow}%</strong>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={galaxyGlow}
-          onChange={(event) => setGalaxyGlow(Number(event.target.value))}
-          className="mv-range"
-        />
-        <div className="mv-setting-row">
-          <span>星云流动速度</span>
-          <strong>{nebulaSpeed}%</strong>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={nebulaSpeed}
-          onChange={(event) => setNebulaSpeed(Number(event.target.value))}
-          className="mv-range"
-        />
+  <label className="mv-slider mv-capture-slider mv-setting-slider" style={{ ["--metric-color" as string]: "#d66eff" }}>
+          <div className="mv-capture-slider-head">
+            <span className="mv-capture-slider-label">
+              <Sparkles size={13} />
+              银河辉光强度
+            </span>
+            <strong className="mv-capture-slider-value">{galaxyGlow}%</strong>
+          </div>
+          <Range
+            step={1}
+            min={0}
+            max={100}
+            values={[galaxyGlow]}
+            onChange={(values) => setGalaxyGlow(values[0] ?? 0)}
+            renderTrack={({ props, children }) => (
+              <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
+                <div
+                  ref={props.ref}
+                  className="mv-capture-range-track"
+                  style={{
+                    background: getTrackBackground({
+                      values: [galaxyGlow],
+                      colors: ["#d66effCC", "rgba(173, 181, 214, 0.34)"],
+                      min: 0,
+                      max: 100,
+                    }),
+                  }}
+                >
+                  {children}
+                </div>
+              </div>
+            )}
+            renderThumb={({ props }) => {
+              const { key, ...thumbProps } = props;
+              return (
+                <div
+                  key={key}
+                  {...thumbProps}
+                  className="mv-capture-range-thumb"
+                  style={{
+                    ...props.style,
+                    background: "#d66eff",
+                    boxShadow: "0 0 6px rgba(214, 110, 255, 0.45)",
+                  }}
+                />
+              );
+            }}
+          />
+        </label>
+
+  <label className="mv-slider mv-capture-slider mv-setting-slider" style={{ ["--metric-color" as string]: "#22d3ee" }}>
+          <div className="mv-capture-slider-head">
+            <span className="mv-capture-slider-label">
+              <Wind size={13} />
+              星云流动速度
+            </span>
+            <strong className="mv-capture-slider-value">{nebulaSpeed}%</strong>
+          </div>
+          <Range
+            step={1}
+            min={0}
+            max={100}
+            values={[nebulaSpeed]}
+            onChange={(values) => setNebulaSpeed(values[0] ?? 0)}
+            renderTrack={({ props, children }) => (
+              <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
+                <div
+                  ref={props.ref}
+                  className="mv-capture-range-track"
+                  style={{
+                    background: getTrackBackground({
+                      values: [nebulaSpeed],
+                      colors: ["#22d3eeCC", "rgba(173, 181, 214, 0.34)"],
+                      min: 0,
+                      max: 100,
+                    }),
+                  }}
+                >
+                  {children}
+                </div>
+              </div>
+            )}
+            renderThumb={({ props }) => {
+              const { key, ...thumbProps } = props;
+              return (
+                <div
+                  key={key}
+                  {...thumbProps}
+                  className="mv-capture-range-thumb"
+                  style={{
+                    ...props.style,
+                    background: "#22d3ee",
+                    boxShadow: "0 0 6px rgba(34, 211, 238, 0.45)",
+                  }}
+                />
+              );
+            }}
+          />
+        </label>
 
         <div className="mv-toggle-row">
           <span>动态反馈</span>

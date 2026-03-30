@@ -1,0 +1,46 @@
+[
+  {
+    "id": "d94b259b-64aa-445e-b983-23e9427f175e",
+    "createdAt": "2026-03-30T11:58:40.386Z",
+    "mood": "joy",
+    "heartRate": 72,
+    "sleep": 72,
+    "energy": 84,
+    "stability": 94,
+    "note": "",
+    "tags": [
+      "工作"
+    ]
+  },
+  {
+    "id": "15ca1546-1b13-4d91-9f6d-33b3bab21dcb",
+    "createdAt": "2026-03-30T11:05:51.530Z",
+    "mood": "calm",
+    "heartRate": 67,
+    "sleep": 72,
+    "energy": 19,
+    "stability": 94,
+    "note": "",
+    "tags": [
+      "工作",
+      "关系",
+      "通勤"
+    ]
+  },
+  {
+    "id": "6064cee3-1e1b-41b9-b34b-01c061e5d420",
+    "createdAt": "2026-03-30T08:33:45.415Z",
+    "mood": "sad",
+    "heartRate": 87,
+    "sleep": 75,
+    "energy": 84,
+    "stability": 94,
+    "note": "",
+    "tags": [
+      "通勤",
+      "工作",
+      "关系",
+      "睡眠"
+    ]
+  }
+]

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 const TOKEN_COOKIE = "mv_token";
 
+export const runtime = "nodejs";
+
 export async function POST() {
   const response = NextResponse.json({ success: true });
   response.cookies.set({

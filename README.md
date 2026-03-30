@@ -1,5 +1,29 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Data persistence
+
+MoodVerse stores account and mood records in JSON files.
+
+- `accounts.json`
+- `mood-records.json`
+
+To ensure data is **persistent across restarts and deployments**, set a writable persistent directory via environment variable:
+
+- `MV_DATA_DIR=/your/persistent/path`
+
+Examples:
+
+- Docker/VM: mount a volume and set `MV_DATA_DIR` to that mount path.
+- Bare metal: set `MV_DATA_DIR` to a stable directory such as `/var/lib/moodverse`.
+
+If `MV_DATA_DIR` is not set, the app will try `./data` first, then OS temp directory as fallback.
+
+> Note: OS temp fallback prevents API crashes but may not survive server restarts.
+
+## Routing
+
+- Root route remains `/` and is not changed by persistence implementation.
+
 ## Getting Started
 
 First, run the development server:

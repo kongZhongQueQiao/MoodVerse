@@ -1,33 +1,12 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
+import { readAccounts, saveAccounts } from "@/app/lib/accounts-store";
 
 const TOKEN_COOKIE = "mv_token";
-const DATA_FILE = path.join(process.cwd(), "data", "accounts.json");
 
-type Account = {
-  email: string;
-  passwordHash: string;
-  createdAt: string;
-};
+export const runtime = "nodejs";
 
 const getSecret = () => new TextEncoder().encode(process.env.AUTH_SECRET ?? "mv-dev-secret");
-
-async function readAccounts(): Promise<Account[]> {
-  try {
-    const raw = await fs.readFile(DATA_FILE, "utf8");
-    const parsed = JSON.parse(raw) as Account[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveAccounts(accounts: Account[]) {
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-  await fs.writeFile(DATA_FILE, JSON.stringify(accounts, null, 2), "utf8");
-}
 
 export async function DELETE(request: NextRequest) {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;
