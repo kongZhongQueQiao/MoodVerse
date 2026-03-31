@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 import { readAccounts, saveAccounts } from "@/app/lib/accounts-store";
+import { shouldUseSecureCookie } from "@/app/lib/cookie-security";
 
 const TOKEN_COOKIE = "mv_token";
 
@@ -27,12 +28,13 @@ export async function DELETE(request: NextRequest) {
     await saveAccounts(nextAccounts);
 
     const response = NextResponse.json({ success: true });
+    const secure = shouldUseSecureCookie(request);
     response.cookies.set({
       name: TOKEN_COOKIE,
       value: "",
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure,
       path: "/",
       maxAge: 0,
     });

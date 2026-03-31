@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SignJWT } from "jose";
 import { createPasswordHash, readAccounts, saveAccounts, verifyPassword } from "@/app/lib/accounts-store";
+import { shouldUseSecureCookie } from "@/app/lib/cookie-security";
 
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const TOKEN_COOKIE = "mv_token";
@@ -71,11 +72,12 @@ export async function POST(request: NextRequest) {
 
     const token = await issueToken(email);
     const response = NextResponse.json({ success: true, action: "create" });
+    const secure = shouldUseSecureCookie(request);
     response.cookies.set({
       name: TOKEN_COOKIE,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure,
       sameSite: "lax",
       path: "/",
       maxAge: TOKEN_MAX_AGE_SECONDS,
@@ -91,11 +93,12 @@ export async function POST(request: NextRequest) {
   if (validPassword) {
     const token = await issueToken(email);
     const response = NextResponse.json({ success: true, action: "login" });
+    const secure = shouldUseSecureCookie(request);
     response.cookies.set({
       name: TOKEN_COOKIE,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure,
       sameSite: "lax",
       path: "/",
       maxAge: TOKEN_MAX_AGE_SECONDS,
