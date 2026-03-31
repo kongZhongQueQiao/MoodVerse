@@ -16,14 +16,14 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(token, getSecret());
-    const email = typeof payload.email === "string" ? payload.email : "";
+    const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
 
     if (!email) {
       return NextResponse.json({ success: false, message: "无效用户" }, { status: 400 });
     }
 
     const accounts = await readAccounts();
-    const nextAccounts = accounts.filter((account) => account.email !== email);
+    const nextAccounts = accounts.filter((account) => account.email.toLowerCase() !== email);
     await saveAccounts(nextAccounts);
 
     const response = NextResponse.json({ success: true });

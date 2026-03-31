@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createMoodRecord, readMoodRecords } from "@/app/lib/mood-records";
 import { buildDashboardAnalytics, buildMoodAnalytics } from "@/app/lib/mood-analytics";
 import type { MoodKey } from "@/app/lib/mood-meta";
+import { getSessionEmail } from "@/app/lib/auth-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,11 +11,16 @@ const VALID_MOODS = new Set<MoodKey>(["joy", "calm", "focus", "sad"]);
 
 const toNumber = (value: unknown) => (typeof value === "number" ? value : Number.NaN);
 
-export async function GET() {
-  const records = await readMoodRecords();
+export async function GET(request: NextRequest) {
+  const email = await getSessionEmail(request);
+  if (!email) {
+    return NextResponse.json({ success: false, message: "未登录" }, { status: 401 });
+  }
+
+  const records = await readMoodRecords(email);
   const latest = records[0] ?? null;
   const analytics = buildMoodAnalytics(records);
-  const dashboard = buildDashboardAnalytics(records);
+  const dashboard = records.length ? buildDashboardAnalytics(records) : null;
 
   return NextResponse.json({
     success: true,
@@ -35,6 +41,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const email = await getSessionEmail(request);
+  if (!email) {
+    return NextResponse.json({ success: false, message: "未登录" }, { status: 401 });
+  }
+
   let payload: Record<string, unknown> = {};
 
   try {
@@ -73,7 +84,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: "稳定性范围无效" }, { status: 400 });
   }
 
-  const { count } = await createMoodRecord({
+  const { count } = await createMoodRecord(email, {
     mood,
     heartRate: Math.round(heartRate),
     sleep: Math.round(sleep),

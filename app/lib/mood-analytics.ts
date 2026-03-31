@@ -20,6 +20,11 @@ type DashboardAnalytics = {
   avgSleepHours: number;
   avgEnergyKcal: number;
   avgStability: number;
+  latestHeartRate: number;
+  latestSleep: number;
+  latestEnergyKcal: number;
+  latestStability: number;
+  moodDistribution: Record<MoodKey, number>;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -80,7 +85,7 @@ function calcTriggerContribution(records: MoodRecord[]) {
   }
 
   if (total <= 0 || pool.size === 0) {
-    return { triggerTag: "工作成就", triggerContribution: 56 };
+    return { triggerTag: "未标记", triggerContribution: 0 };
   }
 
   let topTag = "工作成就";
@@ -100,7 +105,7 @@ function calcTriggerContribution(records: MoodRecord[]) {
 
 function calcBreathingImpact(records: MoodRecord[]) {
   if (!records.length) {
-    return { breathingHabitRate: 8, breathingImpact: 24 };
+    return { breathingHabitRate: 0, breathingImpact: 0 };
   }
 
   const slowGroup = records.filter((item) => item.heartRate <= 90);
@@ -123,7 +128,7 @@ function calcBreathingImpact(records: MoodRecord[]) {
 function calcBars(records: MoodRecord[]) {
   const latestSeven = records.slice(0, 7).reverse();
   if (!latestSeven.length) {
-    return [34, 42, 50, 23, 31, 37, 43];
+    return [];
   }
 
   const normalized = latestSeven.map((item) => clamp(Math.round(item.stability), 20, 100));
@@ -152,6 +157,36 @@ function topCompanionMoods(records: MoodRecord[], topMood: MoodKey) {
 
 function toEnergyKcal(energy: number) {
   return Math.round((energy / 100) * 2800);
+}
+
+function calcMoodDistribution(records: MoodRecord[]) {
+  const total = records.length;
+  if (!total) {
+    return {
+      joy: 0,
+      calm: 0,
+      focus: 0,
+      sad: 0,
+    };
+  }
+
+  const counts: Record<MoodKey, number> = {
+    joy: 0,
+    calm: 0,
+    focus: 0,
+    sad: 0,
+  };
+
+  for (const item of records) {
+    counts[item.mood] += 1;
+  }
+
+  return {
+    joy: clamp(Math.round((counts.joy / total) * 100), 0, 100),
+    calm: clamp(Math.round((counts.calm / total) * 100), 0, 100),
+    focus: clamp(Math.round((counts.focus / total) * 100), 0, 100),
+    sad: clamp(Math.round((counts.sad / total) * 100), 0, 100),
+  };
 }
 
 function std(numbers: number[]) {
@@ -193,11 +228,11 @@ export function buildMoodAnalytics(records: MoodRecord[]): MoodAnalytics {
   if (!sample.length) {
     return {
       trendConvergence: 0,
-      triggerTag: "工作成就",
-      triggerContribution: 56,
-      breathingHabitRate: 8,
-      breathingImpact: 24,
-      bars: [34, 42, 50, 23, 31, 37, 43],
+      triggerTag: "未标记",
+      triggerContribution: 0,
+      breathingHabitRate: 0,
+      breathingImpact: 0,
+      bars: [],
     };
   }
 
@@ -216,14 +251,24 @@ export function buildDashboardAnalytics(records: MoodRecord[]): DashboardAnalyti
   if (!latest || !sample.length) {
     return {
       mood: "joy",
-      alignmentScore: 84,
+      alignmentScore: 0,
       companionMoods: ["calm", "focus"],
-      awakePulseDelta: 12.4,
-      timeStability: 66,
-      avgHeartRate: 72,
-      avgSleepHours: 7.2,
-      avgEnergyKcal: 2400,
-      avgStability: 94,
+      awakePulseDelta: 0,
+      timeStability: 0,
+      avgHeartRate: 0,
+      avgSleepHours: 0,
+      avgEnergyKcal: 0,
+      avgStability: 0,
+      latestHeartRate: 0,
+      latestSleep: 0,
+      latestEnergyKcal: 0,
+      latestStability: 0,
+      moodDistribution: {
+        joy: 0,
+        calm: 0,
+        focus: 0,
+        sad: 0,
+      },
     };
   }
 
@@ -242,6 +287,11 @@ export function buildDashboardAnalytics(records: MoodRecord[]): DashboardAnalyti
     avgSleepHours: Math.round((avgSleep / 10) * 10) / 10,
     avgEnergyKcal: toEnergyKcal(avgEnergy),
     avgStability: clamp(Math.round(avgStability), 0, 100),
+    latestHeartRate: Math.round(latest.heartRate),
+    latestSleep: Math.round(latest.sleep),
+    latestEnergyKcal: toEnergyKcal(latest.energy),
+    latestStability: clamp(Math.round(latest.stability), 0, 100),
+    moodDistribution: calcMoodDistribution(sample),
   };
 }
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Range, getTrackBackground } from "react-range";
 import { Droplets, Sparkles, Cloud, Zap, HeartPulse, MoonStar, Flame, ShieldCheck } from "lucide-react";
@@ -50,6 +50,24 @@ type MoodSummaryResponse = {
   count?: number;
 };
 
+type SliderValues = number[];
+
+type RangeTrackRenderArgs = {
+  props: {
+    onMouseDown?: HTMLAttributes<HTMLDivElement>["onMouseDown"];
+    onTouchStart?: HTMLAttributes<HTMLDivElement>["onTouchStart"];
+    ref: React.Ref<HTMLDivElement>;
+  };
+  children: ReactNode;
+};
+
+type RangeThumbRenderArgs = {
+  props: HTMLAttributes<HTMLDivElement> & {
+    key?: string;
+    style?: CSSProperties;
+  };
+};
+
 export default function MoodCapturePage() {
   const router = useRouter();
   const [selectedMood, setSelectedMood] = useState<(typeof moods)[number]["key"]>("joy");
@@ -82,7 +100,7 @@ export default function MoodCapturePage() {
 
     const loadCount = async () => {
       try {
-        const response = await fetch("/api/mood", { cache: "no-store" });
+        const response = await fetch(`/api/mood?ts=${Date.now()}`, { cache: "no-store" });
         if (!response.ok) {
           if (active) setRecordCount(0);
           return;
@@ -139,7 +157,7 @@ export default function MoodCapturePage() {
 
       setToast("记录成功");
       window.setTimeout(() => {
-        router.replace("/");
+        router.replace(`/?refresh=${Date.now()}`);
       }, 500);
     } catch {
       setToast("记录失败，请稍后重试");
@@ -229,8 +247,8 @@ export default function MoodCapturePage() {
                 min={40}
                 max={140}
                 values={[heartRate]}
-                onChange={(values) => setHeartRate(values[0] ?? 40)}
-                renderTrack={({ props, children }) => (
+                onChange={(values: SliderValues) => setHeartRate(values[0] ?? 40)}
+                renderTrack={({ props, children }: RangeTrackRenderArgs) => (
                   <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
                     <div
                       ref={props.ref}
@@ -248,7 +266,7 @@ export default function MoodCapturePage() {
                     </div>
                   </div>
                 )}
-                renderThumb={({ props }) => {
+                renderThumb={({ props }: RangeThumbRenderArgs) => {
                   const { key, ...thumbProps } = props;
                   return (
                     <div
@@ -281,8 +299,8 @@ export default function MoodCapturePage() {
                 min={10}
                 max={100}
                 values={[sleep]}
-                onChange={(values) => setSleep(values[0] ?? 10)}
-                renderTrack={({ props, children }) => (
+                onChange={(values: SliderValues) => setSleep(values[0] ?? 10)}
+                renderTrack={({ props, children }: RangeTrackRenderArgs) => (
                   <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
                     <div
                       ref={props.ref}
@@ -300,7 +318,7 @@ export default function MoodCapturePage() {
                     </div>
                   </div>
                 )}
-                renderThumb={({ props }) => {
+                renderThumb={({ props }: RangeThumbRenderArgs) => {
                   const { key, ...thumbProps } = props;
                   return (
                     <div
@@ -333,8 +351,8 @@ export default function MoodCapturePage() {
                 min={10}
                 max={100}
                 values={[energy]}
-                onChange={(values) => setEnergy(values[0] ?? 10)}
-                renderTrack={({ props, children }) => (
+                onChange={(values: SliderValues) => setEnergy(values[0] ?? 10)}
+                renderTrack={({ props, children }: RangeTrackRenderArgs) => (
                   <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
                     <div
                       ref={props.ref}
@@ -352,7 +370,7 @@ export default function MoodCapturePage() {
                     </div>
                   </div>
                 )}
-                renderThumb={({ props }) => {
+                renderThumb={({ props }: RangeThumbRenderArgs) => {
                   const { key, ...thumbProps } = props;
                   return (
                     <div
@@ -385,8 +403,8 @@ export default function MoodCapturePage() {
                 min={20}
                 max={100}
                 values={[stability]}
-                onChange={(values) => setStability(values[0] ?? 20)}
-                renderTrack={({ props, children }) => (
+                onChange={(values: SliderValues) => setStability(values[0] ?? 20)}
+                renderTrack={({ props, children }: RangeTrackRenderArgs) => (
                   <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
                     <div
                       ref={props.ref}
@@ -404,7 +422,7 @@ export default function MoodCapturePage() {
                     </div>
                   </div>
                 )}
-                renderThumb={({ props }) => {
+                renderThumb={({ props }: RangeThumbRenderArgs) => {
                   const { key, ...thumbProps } = props;
                   return (
                     <div

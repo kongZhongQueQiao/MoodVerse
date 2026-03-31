@@ -117,15 +117,15 @@ export default function LoginPage() {
           className="mv-auth-create"
           role="button"
           tabIndex={0}
-          onClick={() => setIsCreating(true)}
+          onClick={() => setIsCreating((previous) => !previous)}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
-              setIsCreating(true);
+              setIsCreating((previous) => !previous);
             }
           }}
         >
-          {isCreating ? "正在创建新的星屿" : "创建新的星屿 →"}
+          {isCreating ? "取消创建，返回登录 →" : "创建新的星屿 →"}
         </p>
       </main>
 

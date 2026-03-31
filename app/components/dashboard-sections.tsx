@@ -21,23 +21,28 @@ type DashboardPayload = {
   avgSleepHours: number;
   avgEnergyKcal: number;
   avgStability: number;
+  latestHeartRate?: number;
+  latestSleep?: number;
+  latestEnergyKcal?: number;
+  latestStability?: number;
 };
 
 type MoodApiResponse = {
   success?: boolean;
-  dashboard?: DashboardPayload;
+  count?: number;
+  dashboard?: DashboardPayload | null;
 };
 
-const fallbackDashboard: DashboardPayload = {
+const emptyDashboard: DashboardPayload = {
   mood: "joy",
-  alignmentScore: 84,
+  alignmentScore: 0,
   companionMoods: ["calm", "focus"],
-  awakePulseDelta: 12.4,
-  timeStability: 66,
-  avgHeartRate: 72,
-  avgSleepHours: 7.2,
-  avgEnergyKcal: 2400,
-  avgStability: 94,
+  awakePulseDelta: 0,
+  timeStability: 0,
+  avgHeartRate: 0,
+  avgSleepHours: 0,
+  avgEnergyKcal: 0,
+  avgStability: 0,
 };
 
 const metricMeta = [
@@ -46,7 +51,7 @@ const metricMeta = [
     icon: "/icons/Container (2).svg",
     iconAlt: "心率图标",
     iconSize: { width: 14, height: 13 },
-    title: "平均心率",
+    title: "最新心率",
     toneClass: "heart",
   },
   {
@@ -54,7 +59,7 @@ const metricMeta = [
     icon: "/icons/Container (1).svg",
     iconAlt: "睡眠图标",
     iconSize: { width: 14, height: 14 },
-    title: "睡眠周期",
+    title: "最新睡眠",
     toneClass: "sleep",
   },
   {
@@ -62,7 +67,7 @@ const metricMeta = [
     icon: "/icons/Icon.svg",
     iconAlt: "能量图标",
     iconSize: { width: 12, height: 15 },
-    title: "活跃能量",
+    title: "最新能量",
     toneClass: "energy",
   },
   {
@@ -70,27 +75,33 @@ const metricMeta = [
     icon: "/icons/Icon (1).svg",
     iconAlt: "稳定图标",
     iconSize: { width: 14, height: 12 },
-    title: "呼吸总制",
+    title: "最新稳定性",
     toneClass: "stable",
   },
 ];
 
 export function DashboardSections() {
-  const [dashboard, setDashboard] = useState<DashboardPayload>(fallbackDashboard);
+  const [dashboard, setDashboard] = useState<DashboardPayload>(emptyDashboard);
+  const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
     let active = true;
 
     const loadDashboard = async () => {
       try {
-        const response = await fetch("/api/mood", { cache: "no-store" });
+        const response = await fetch(`/api/mood?ts=${Date.now()}`, { cache: "no-store" });
         if (!response.ok) return;
 
         const data = (await response.json()) as MoodApiResponse;
-        if (!active || !data.success || !data.dashboard) return;
-        setDashboard(data.dashboard);
+        if (!active || !data.success) return;
+        const nextHasData = typeof data.count === "number" && data.count > 0 && !!data.dashboard;
+        setHasData(nextHasData);
+        setDashboard(data.dashboard ?? emptyDashboard);
       } catch {
-        // keep fallback
+        if (active) {
+          setHasData(false);
+          setDashboard(emptyDashboard);
+        }
       }
     };
 
@@ -102,30 +113,35 @@ export function DashboardSections() {
   }, []);
 
   const moodMeta = useMemo(() => MOOD_META[dashboard.mood], [dashboard.mood]);
+  const latestHeartRate = dashboard.latestHeartRate ?? dashboard.avgHeartRate;
+  const latestSleep = dashboard.latestSleep ?? Math.round(dashboard.avgSleepHours * 10);
+  const latestEnergyKcal = dashboard.latestEnergyKcal ?? dashboard.avgEnergyKcal;
+  const latestStability = dashboard.latestStability ?? dashboard.avgStability;
+
   const metrics = useMemo(
     () => [
       {
         ...metricMeta[0],
-        value: `${dashboard.avgHeartRate} BPM`,
+        value: hasData ? `${latestHeartRate} BPM` : "--",
       },
       {
         ...metricMeta[1],
-        value: `${dashboard.avgSleepHours.toFixed(1)}h 深度`,
+        value: hasData ? `${latestSleep}%` : "--",
       },
       {
         ...metricMeta[2],
-        value: `${(dashboard.avgEnergyKcal / 1000).toFixed(1)}k kcal`,
+        value: hasData ? `${latestEnergyKcal} kcal` : "--",
       },
       {
         ...metricMeta[3],
-        value: `${dashboard.avgStability}% 稳定性`,
+        value: hasData ? `${latestStability}% 稳定性` : "--",
       },
     ],
-    [dashboard],
+    [hasData, latestEnergyKcal, latestHeartRate, latestSleep, latestStability],
   );
 
   const pulseSign = dashboard.awakePulseDelta >= 0 ? "+" : "";
-  const pulseProgress = Math.max(8, Math.min(100, Math.abs(dashboard.awakePulseDelta) * 2.2));
+  const pulseProgress = hasData ? Math.max(8, Math.min(100, Math.abs(dashboard.awakePulseDelta) * 2.2)) : 0;
 
   return (
     <>
@@ -133,9 +149,9 @@ export function DashboardSections() {
         <div className="mv-orbit-core-live-wrap">
           <PlanetCore moodKey={dashboard.mood} />
         </div>
-        <p className="mv-orbit-main-label" style={{ color: moodMeta.color }}>{moodMeta.label}</p>
+        <p className="mv-orbit-main-label" style={{ color: moodMeta.color }}>{hasData ? moodMeta.label : "暂无记录"}</p>
         <div className="mv-orbit-score-wrap">
-          <strong style={{ color: moodMeta.color }}>{dashboard.alignmentScore}%</strong>
+          <strong style={{ color: moodMeta.color }}>{hasData ? `${dashboard.alignmentScore}%` : "--"}</strong>
           <span>对齐指数</span>
         </div>
       </article>
@@ -147,17 +163,17 @@ export function DashboardSections() {
         </h3>
         <div className="mv-progress-row">
           <span>清醒脉冲</span>
-          <strong>{`${pulseSign}${dashboard.awakePulseDelta.toFixed(1)}%`}</strong>
+          <strong>{hasData ? `${pulseSign}${dashboard.awakePulseDelta.toFixed(1)}%` : "--"}</strong>
         </div>
         <div className="mv-progress">
           <i style={{ width: `${pulseProgress}%` }} />
         </div>
         <div className="mv-progress-row">
           <span>时间稳定性</span>
-          <strong>{dashboard.timeStability}%</strong>
+          <strong>{hasData ? `${dashboard.timeStability}%` : "--"}</strong>
         </div>
         <div className="mv-progress purple">
-          <i style={{ width: `${dashboard.timeStability}%` }} />
+          <i style={{ width: `${hasData ? dashboard.timeStability : 0}%` }} />
         </div>
       </article>
 

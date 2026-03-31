@@ -1,46 +1,72 @@
-[
-  {
-    "id": "d94b259b-64aa-445e-b983-23e9427f175e",
-    "createdAt": "2026-03-30T11:58:40.386Z",
-    "mood": "joy",
-    "heartRate": 72,
-    "sleep": 72,
-    "energy": 84,
-    "stability": 94,
-    "note": "",
-    "tags": [
-      "工作"
-    ]
-  },
-  {
-    "id": "15ca1546-1b13-4d91-9f6d-33b3bab21dcb",
-    "createdAt": "2026-03-30T11:05:51.530Z",
-    "mood": "calm",
-    "heartRate": 67,
-    "sleep": 72,
-    "energy": 19,
-    "stability": 94,
-    "note": "",
-    "tags": [
-      "工作",
-      "关系",
-      "通勤"
-    ]
-  },
-  {
-    "id": "6064cee3-1e1b-41b9-b34b-01c061e5d420",
-    "createdAt": "2026-03-30T08:33:45.415Z",
-    "mood": "sad",
-    "heartRate": 87,
-    "sleep": 75,
-    "energy": 84,
-    "stability": 94,
-    "note": "",
-    "tags": [
-      "通勤",
-      "工作",
-      "关系",
-      "睡眠"
-    ]
-  }
-]
+{
+  "example@gmail.com": [
+    {
+      "id": "f2099dea-d9ac-4b2f-b1d9-c0de3e265393",
+      "createdAt": "2026-03-31T02:14:17.718Z",
+      "mood": "joy",
+      "heartRate": 72,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "7bb44905-f56d-44db-abf7-99260188f164",
+      "createdAt": "2026-03-31T01:07:42.990Z",
+      "mood": "sad",
+      "heartRate": 117,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "4e648706-e84c-4073-93b1-df10792b2619",
+      "createdAt": "2026-03-31T00:59:17.674Z",
+      "mood": "calm",
+      "heartRate": 96,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 100,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "251ed141-8cfa-426a-bb62-15c0e922d289",
+      "createdAt": "2026-03-31T00:55:12.279Z",
+      "mood": "joy",
+      "heartRate": 128,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作",
+        "关系"
+      ]
+    }
+  ],
+  "example1@gmail.com": [
+    {
+      "id": "0894ff0c-6ccf-4e2a-8f19-de665b9e31af",
+      "createdAt": "2026-03-31T00:55:51.485Z",
+      "mood": "joy",
+      "heartRate": 89,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    }
+  ]
+}

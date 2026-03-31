@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const email = typeof payload.email === "string" ? payload.email.trim() : "";
+  const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   const password = typeof payload.password === "string" ? payload.password : "";
   const action = payload.action === "create" ? "create" : "login";
 

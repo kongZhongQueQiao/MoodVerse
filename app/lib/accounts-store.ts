@@ -11,13 +11,7 @@ const ACCOUNTS_FILE = "accounts.json";
 
 const hashPassword = (password: string) => crypto.createHash("sha256").update(password).digest("hex");
 
-const defaultAccounts: Account[] = [
-  {
-    email: "example@gmail.com",
-    passwordHash: hashPassword("123456"),
-    createdAt: new Date().toISOString(),
-  },
-];
+const defaultAccounts: Account[] = [];
 
 export async function readAccounts(): Promise<Account[]> {
   const records = await readJsonFile<Account[]>(ACCOUNTS_FILE, defaultAccounts);

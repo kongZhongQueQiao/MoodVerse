@@ -26,16 +26,16 @@ type MoodSummaryResponse = {
 
 const fallbackAnalytics: MoodAnalytics = {
   trendConvergence: 0,
-  triggerTag: "工作成就",
-  triggerContribution: 56,
-  breathingHabitRate: 8,
-  breathingImpact: 24,
-  bars: [34, 42, 50, 23, 31, 37, 43],
+  triggerTag: "未标记",
+  triggerContribution: 0,
+  breathingHabitRate: 0,
+  breathingImpact: 0,
+  bars: [],
 };
 
 export default function MoodPage() {
   const [moodKey, setMoodKey] = useState<MoodKey>("joy");
-  const [score, setScore] = useState(88);
+  const [score, setScore] = useState(0);
   const [count, setCount] = useState(0);
   const [analytics, setAnalytics] = useState<MoodAnalytics>(fallbackAnalytics);
 
@@ -63,13 +63,13 @@ export default function MoodPage() {
         if (data.analytics) {
           setAnalytics({
             trendConvergence: Math.max(0, Math.min(95, Math.round(data.analytics.trendConvergence))),
-            triggerTag: data.analytics.triggerTag || "工作成就",
+            triggerTag: data.analytics.triggerTag || "未标记",
             triggerContribution: Math.max(0, Math.min(99, Math.round(data.analytics.triggerContribution))),
             breathingHabitRate: Math.max(0, Math.min(100, Math.round(data.analytics.breathingHabitRate))),
             breathingImpact: Math.max(0, Math.min(42, Math.round(data.analytics.breathingImpact))),
             bars: Array.isArray(data.analytics.bars) && data.analytics.bars.length
               ? data.analytics.bars.slice(0, 7)
-              : fallbackAnalytics.bars,
+              : [],
           });
         }
 
