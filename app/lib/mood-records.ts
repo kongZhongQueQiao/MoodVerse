@@ -24,18 +24,12 @@ function normalizeEmail(email: string) {
 }
 
 function toUserMap(raw: unknown): MoodRecordsByUser {
-  if (Array.isArray(raw)) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return {};
   }
 
-  if (!raw || typeof raw !== "object") {
-    return {};
-  }
-
-  const entries = Object.entries(raw as Record<string, unknown>);
   const result: MoodRecordsByUser = {};
-
-  for (const [email, value] of entries) {
+  for (const [email, value] of Object.entries(raw as Record<string, unknown>)) {
     if (!Array.isArray(value)) continue;
     result[normalizeEmail(email)] = value as MoodRecord[];
   }
@@ -80,4 +74,15 @@ export async function getMoodRecordSummary(email: string) {
     count: records.length,
     latest: records[0] ?? null,
   };
+}
+
+export async function clearMoodRecords(email: string) {
+  const recordsByUser = await readMoodRecordsStore();
+  const userEmail = normalizeEmail(email);
+  const removedCount = recordsByUser[userEmail]?.length ?? 0;
+
+  delete recordsByUser[userEmail];
+  await writeJsonFileAtomic(MOOD_RECORDS_FILE, recordsByUser);
+
+  return { removedCount };
 }

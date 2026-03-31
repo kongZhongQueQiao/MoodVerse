@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 const palette = ["#d893ff", "#00e5ff", "#ff6b9f", "#4f57c9", "#2b8867"];
 
 const settings = [
+  { label: "清除个人数据", action: "clear-data" },
   { label: "退出登录", action: "logout" },
   { label: "注销账户", action: "deactivate" },
 ] as const;
@@ -21,7 +22,9 @@ export default function SettingsPage() {
   const [nebulaSpeed, setNebulaSpeed] = useState(42);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isClearingData, setIsClearingData] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showClearDataModal, setShowClearDataModal] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -50,6 +53,11 @@ export default function SettingsPage() {
   };
 
   const handleMenuClick = (action: (typeof settings)[number]["action"]) => {
+    if (action === "clear-data") {
+      setShowClearDataModal(true);
+      return;
+    }
+
     if (action === "logout") {
       void handleLogout();
       return;
@@ -57,6 +65,31 @@ export default function SettingsPage() {
 
     if (action === "deactivate") {
       setShowDeactivateModal(true);
+    }
+  };
+
+  const handleClearPersonalData = async () => {
+    if (isClearingData) return;
+
+    setIsClearingData(true);
+
+    try {
+      const response = await fetch("/api/mood", { method: "DELETE" });
+
+      if (!response.ok) {
+        setToast("清除失败，请稍后重试");
+        return;
+      }
+
+      setToast("已清除个人心情数据");
+      setShowClearDataModal(false);
+    } catch {
+      setToast("清除失败，请稍后重试");
+    } finally {
+      window.setTimeout(() => {
+        setToast("");
+      }, 1800);
+      setIsClearingData(false);
     }
   };
 
@@ -257,7 +290,11 @@ export default function SettingsPage() {
             <button
               key={item.label}
               className="mv-menu-item"
-              disabled={(isLoggingOut && item.action === "logout") || (isDeleting && item.action === "deactivate")}
+              disabled={
+                (isClearingData && item.action === "clear-data") ||
+                (isLoggingOut && item.action === "logout") ||
+                (isDeleting && item.action === "deactivate")
+              }
               onClick={() => handleMenuClick(item.action)}
             >
               <span>{item.label}</span>
@@ -289,6 +326,36 @@ export default function SettingsPage() {
                     disabled={isDeleting}
                   >
                     {isDeleting ? "注销中..." : "确认"}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {mounted && showClearDataModal
+        ? createPortal(
+            <div className="mv-modal-overlay" role="dialog" aria-modal="true" aria-label="清除个人数据确认">
+              <div className="mv-modal-card">
+                <h4>确认清除个人数据？</h4>
+                <p>将永久清空当前邮箱下的全部心情记录，且无法恢复。</p>
+                <div className="mv-modal-actions">
+                  <button
+                    type="button"
+                    className="mv-modal-btn mv-modal-btn-cancel"
+                    onClick={() => setShowClearDataModal(false)}
+                    disabled={isClearingData}
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    className="mv-modal-btn mv-modal-btn-confirm"
+                    onClick={() => void handleClearPersonalData()}
+                    disabled={isClearingData}
+                  >
+                    {isClearingData ? "清除中..." : "确认"}
                   </button>
                 </div>
               </div>

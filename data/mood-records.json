@@ -1,11 +1,11 @@
 {
   "example@gmail.com": [
     {
-      "id": "f2099dea-d9ac-4b2f-b1d9-c0de3e265393",
-      "createdAt": "2026-03-31T02:14:17.718Z",
+      "id": "1eb518e3-ed11-4aee-8df1-bae108684534",
+      "createdAt": "2026-03-31T12:18:55.682Z",
       "mood": "joy",
-      "heartRate": 72,
-      "sleep": 72,
+      "heartRate": 106,
+      "sleep": 100,
       "energy": 84,
       "stability": 94,
       "note": "",
@@ -14,53 +14,11 @@
       ]
     },
     {
-      "id": "7bb44905-f56d-44db-abf7-99260188f164",
-      "createdAt": "2026-03-31T01:07:42.990Z",
+      "id": "3adc5320-81db-4e21-8a6a-3e3b4a6a1c5f",
+      "createdAt": "2026-03-31T12:18:50.891Z",
       "mood": "sad",
-      "heartRate": 117,
-      "sleep": 72,
-      "energy": 84,
-      "stability": 94,
-      "note": "",
-      "tags": [
-        "工作"
-      ]
-    },
-    {
-      "id": "4e648706-e84c-4073-93b1-df10792b2619",
-      "createdAt": "2026-03-31T00:59:17.674Z",
-      "mood": "calm",
-      "heartRate": 96,
-      "sleep": 72,
-      "energy": 84,
-      "stability": 100,
-      "note": "",
-      "tags": [
-        "工作"
-      ]
-    },
-    {
-      "id": "251ed141-8cfa-426a-bb62-15c0e922d289",
-      "createdAt": "2026-03-31T00:55:12.279Z",
-      "mood": "joy",
-      "heartRate": 128,
-      "sleep": 72,
-      "energy": 84,
-      "stability": 94,
-      "note": "",
-      "tags": [
-        "工作",
-        "关系"
-      ]
-    }
-  ],
-  "example1@gmail.com": [
-    {
-      "id": "0894ff0c-6ccf-4e2a-8f19-de665b9e31af",
-      "createdAt": "2026-03-31T00:55:51.485Z",
-      "mood": "joy",
-      "heartRate": 89,
-      "sleep": 72,
+      "heartRate": 111,
+      "sleep": 96,
       "energy": 84,
       "stability": 94,
       "note": "",

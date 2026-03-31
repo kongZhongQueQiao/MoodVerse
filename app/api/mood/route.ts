@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createMoodRecord, readMoodRecords } from "@/app/lib/mood-records";
+import { clearMoodRecords, createMoodRecord, readMoodRecords } from "@/app/lib/mood-records";
 import { buildDashboardAnalytics, buildMoodAnalytics } from "@/app/lib/mood-analytics";
 import type { MoodKey } from "@/app/lib/mood-meta";
 import { getSessionEmail } from "@/app/lib/auth-session";
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const records = await readMoodRecords(email);
   const latest = records[0] ?? null;
   const analytics = buildMoodAnalytics(records);
-  const dashboard = records.length ? buildDashboardAnalytics(records) : null;
+  const dashboard = buildDashboardAnalytics(records);
 
   return NextResponse.json({
     success: true,
@@ -95,4 +95,14 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ success: true, count, message: "记录成功" });
+}
+
+export async function DELETE(request: NextRequest) {
+  const email = await getSessionEmail(request);
+  if (!email) {
+    return NextResponse.json({ success: false, message: "未登录" }, { status: 401 });
+  }
+
+  const { removedCount } = await clearMoodRecords(email);
+  return NextResponse.json({ success: true, removedCount, message: "个人心情数据已清除" });
 }
