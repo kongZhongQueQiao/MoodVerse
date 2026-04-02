@@ -1,6 +1,45 @@
 {
   "example@gmail.com": [
     {
+      "id": "37f78203-070e-40b6-a710-54f2d54228b2",
+      "createdAt": "2026-04-02T02:30:44.358Z",
+      "mood": "focus",
+      "heartRate": 72,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "ae31ba0f-be1e-425c-80e4-70362b41aa98",
+      "createdAt": "2026-04-02T02:30:28.198Z",
+      "mood": "sad",
+      "heartRate": 72,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "1e5374d2-0ed9-49cb-a4f4-626cba4ea5cf",
+      "createdAt": "2026-04-01T02:24:22.020Z",
+      "mood": "calm",
+      "heartRate": 72,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
       "id": "1eb518e3-ed11-4aee-8df1-bae108684534",
       "createdAt": "2026-03-31T12:18:55.682Z",
       "mood": "joy",
