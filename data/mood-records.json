@@ -1,6 +1,58 @@
 {
   "example@gmail.com": [
     {
+      "id": "a9b30c70-13a0-442d-8e9c-16a4819b3e2e",
+      "createdAt": "2026-04-07T02:27:18.661Z",
+      "mood": "calm",
+      "heartRate": 113,
+      "sleep": 87,
+      "energy": 32,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "8792e246-ea3a-4dee-abba-ca159db80774",
+      "createdAt": "2026-04-07T02:26:17.269Z",
+      "mood": "calm",
+      "heartRate": 72,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "ea752507-3338-40cb-aab8-dd7bf65ae773",
+      "createdAt": "2026-04-07T02:00:17.471Z",
+      "mood": "focus",
+      "heartRate": 72,
+      "sleep": 70,
+      "energy": 76,
+      "stability": 82,
+      "note": "快速记录",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
+      "id": "332c1e62-7c78-4dd6-a128-d08c9c493340",
+      "createdAt": "2026-04-07T01:59:41.680Z",
+      "mood": "joy",
+      "heartRate": 72,
+      "sleep": 70,
+      "energy": 76,
+      "stability": 82,
+      "note": "快速记录",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
       "id": "37f78203-070e-40b6-a710-54f2d54228b2",
       "createdAt": "2026-04-02T02:30:44.358Z",
       "mood": "focus",

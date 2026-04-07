@@ -82,6 +82,37 @@ export default function MoodCapturePage() {
   const [recordCount, setRecordCount] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(["工作"]);
 
+  const submitMood = async (payload: {
+    mood: (typeof moods)[number]["key"];
+    heartRate: number;
+    sleep: number;
+    energy: number;
+    stability: number;
+    note: string;
+    tags: string[];
+  }) => {
+    const response = await fetch("/api/mood", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = (await response.json()) as { success?: boolean; message?: string; count?: number };
+
+    if (!response.ok || !result.success) {
+      setToast(result.message ?? "记录失败，请稍后重试");
+      return false;
+    }
+
+    if (typeof result.count === "number") {
+      setRecordCount(result.count);
+    }
+
+    return true;
+  };
+
   const metricStyle = (color: string) => ({
     ["--metric-color" as string]: color,
   });
@@ -128,37 +159,60 @@ export default function MoodCapturePage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/mood", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mood: selectedMood,
-          heartRate,
-          sleep,
-          energy,
-          stability,
-          note,
-          tags: selectedTags.length ? selectedTags : ["未标记"],
-        }),
+      const success = await submitMood({
+        mood: selectedMood,
+        heartRate,
+        sleep,
+        energy,
+        stability,
+        note,
+        tags: selectedTags.length ? selectedTags : ["未标记"],
       });
 
-  const result = (await response.json()) as { success?: boolean; message?: string; count?: number };
-
-      if (!response.ok || !result.success) {
-        setToast(result.message ?? "记录失败，请稍后重试");
+      if (!success) {
         return;
-      }
-
-      if (typeof result.count === "number") {
-        setRecordCount(result.count);
       }
 
       setToast("记录成功");
       window.setTimeout(() => {
         router.replace(`/?refresh=${Date.now()}`);
       }, 500);
+    } catch {
+      setToast("记录失败，请稍后重试");
+    } finally {
+      setIsSubmitting(false);
+      window.setTimeout(() => {
+        setToast("");
+      }, 1800);
+    }
+  };
+
+  const handleQuickCapture = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const success = await submitMood({
+        mood: selectedMood,
+        heartRate: 72,
+        sleep: 70,
+        energy: 76,
+        stability: 82,
+        note: "快速记录",
+        tags: selectedTags.length ? selectedTags : ["未标记"],
+      });
+
+      if (!success) return;
+
+      setHeartRate(72);
+      setSleep(70);
+      setEnergy(76);
+      setStability(82);
+      setToast("已完成 5 秒记录");
+      window.setTimeout(() => {
+        router.replace(`/?refresh=${Date.now()}`);
+      }, 450);
     } catch {
       setToast("记录失败，请稍后重试");
     } finally {
@@ -205,6 +259,21 @@ export default function MoodCapturePage() {
 
           <h1 className="mv-title">你的宇宙如何？</h1>
           <p className="mv-subtitle">选择当下最接近你的能量状态</p>
+
+          <article className="mv-card mv-capture-fast-card">
+            <h3>快速记录</h3>
+            <p>没时间细填时，使用推荐参数 5 秒完成一条记录。</p>
+            <div className="mv-action-row">
+              <button
+                type="button"
+                className="mv-btn mv-btn-primary"
+                onClick={() => void handleQuickCapture()}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "提交中..." : "一键快速记录"}
+              </button>
+            </div>
+          </article>
 
           <section className="mv-mood-grid mv-capture-mood-grid" aria-label="情绪选择">
             {moods.map((mood) => {

@@ -6,6 +6,11 @@
     "dev": "node scripts/dev-with-network-ip.mjs",
     "build": "next build",
     "start": "next start",
+    "start:public": "next start -H 0.0.0.0",
+    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
+    "pm2:restart": "pm2 restart moodverse --update-env",
+    "pm2:stop": "pm2 delete moodverse",
+    "pm2:logs": "pm2 logs moodverse",
     "lint": "eslint"
   },
   "dependencies": {
@@ -15,6 +20,7 @@
     "jose": "^6.2.2",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
+    "pm2": "^6.0.14",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-range": "^1.10.0",

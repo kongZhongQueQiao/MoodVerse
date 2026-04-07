@@ -5,6 +5,14 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, Sparkles } from "@react-three/drei";
 import { AdditiveBlending, BackSide, CanvasTexture, Color, RepeatWrapping, SRGBColorSpace } from "three";
 import type { Group, Mesh } from "three";
+import {
+  DEFAULT_GALAXY_GLOW,
+  DEFAULT_NEBULA_SPEED,
+  MV_VISUAL_PREF_EVENT,
+  clampPercent,
+  readVisualPreferences,
+  type VisualPreferences,
+} from "@/app/lib/visual-preferences";
 
 type MoodKey = "joy" | "calm" | "focus" | "sad";
 
@@ -102,7 +110,7 @@ function createSurfaceTexture(base: string, emissive: string) {
   return texture;
 }
 
-function createBandCloudTexture(emissive: string) {
+function createBandCloudTexture(emissive: string, glow: number) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 256;
@@ -125,13 +133,15 @@ function createBandCloudTexture(emissive: string) {
     ctx.fillRect(0, y, canvas.width, 1);
   }
 
+  const glowFactor = 0.58 + (clampPercent(glow) / 100) * 0.95;
+
   // Spot storms
   for (let i = 0; i < 14; i += 1) {
     const x = ((i * 73) % 500) + 8;
     const y = ((i * 41) % 220) + 18;
     const r = 10 + (i % 6) * 2;
     const spot = ctx.createRadialGradient(x, y, 0, x, y, r);
-    spot.addColorStop(0, "rgba(255,255,255,0.28)");
+    spot.addColorStop(0, `rgba(255,255,255,${(0.16 + 0.26 * glowFactor).toFixed(3)})`);
     spot.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = spot;
     ctx.beginPath();
@@ -147,32 +157,78 @@ function createBandCloudTexture(emissive: string) {
   return texture;
 }
 
-function PlanetMesh({ theme }: { theme: PlanetTheme }) {
+function createHighlightTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    return new CanvasTexture(canvas);
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const points = [
+    { x: 144, y: 162, r: 60 },
+    { x: 294, y: 214, r: 44 },
+    { x: 362, y: 300, r: 34 },
+    { x: 214, y: 328, r: 27 },
+    { x: 334, y: 124, r: 26 },
+  ];
+
+  for (const point of points) {
+    const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, point.r);
+    gradient.addColorStop(0, "rgba(255,255,255,0.95)");
+    gradient.addColorStop(0.24, "rgba(255,255,255,0.36)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, point.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const texture = new CanvasTexture(canvas);
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
+  texture.colorSpace = SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function PlanetMesh({ theme, galaxyGlow, orbitSpeedFactor }: { theme: PlanetTheme; galaxyGlow: number; orbitSpeedFactor: number }) {
   const coreRef = useRef<Mesh>(null);
   const cloudRef = useRef<Mesh>(null);
   const atmosphereRef = useRef<Mesh>(null);
+  const highlightsRef = useRef<Mesh>(null);
+  const glowFactor = 0.58 + (clampPercent(galaxyGlow) / 100) * 0.95;
   const surfaceTexture = useMemo(() => createSurfaceTexture(theme.base, theme.emissive), [theme.base, theme.emissive]);
-  const cloudTexture = useMemo(() => createBandCloudTexture(theme.emissive), [theme.emissive]);
+  const cloudTexture = useMemo(() => createBandCloudTexture(theme.emissive, galaxyGlow), [theme.emissive, galaxyGlow]);
+  const highlightTexture = useMemo(() => createHighlightTexture(), []);
 
   useFrame((state, delta) => {
     if (coreRef.current) {
-      coreRef.current.rotation.y += delta * 0.18;
-      coreRef.current.rotation.x += delta * 0.03;
+      coreRef.current.rotation.y += delta * 0.18 * orbitSpeedFactor;
+      coreRef.current.rotation.x += delta * 0.03 * orbitSpeedFactor;
     }
 
     if (cloudRef.current) {
-      cloudRef.current.rotation.y -= delta * 0.1;
-      cloudRef.current.rotation.x += delta * 0.015;
+      cloudRef.current.rotation.y -= delta * 0.1 * orbitSpeedFactor;
+      cloudRef.current.rotation.x += delta * 0.015 * orbitSpeedFactor;
     }
 
     if (atmosphereRef.current) {
       const scale = 1 + Math.sin(state.clock.elapsedTime * 1.2) * 0.012;
       atmosphereRef.current.scale.setScalar(scale);
     }
+
+    if (highlightsRef.current) {
+      highlightsRef.current.rotation.y += delta * 0.085 * orbitSpeedFactor;
+      highlightsRef.current.rotation.x += delta * 0.012 * orbitSpeedFactor;
+    }
   });
 
   return (
-    <Float speed={1.35} rotationIntensity={0.25} floatIntensity={0.4}>
+    <Float speed={1.35 * orbitSpeedFactor} rotationIntensity={0.25} floatIntensity={0.4}>
       <mesh ref={coreRef}>
         <sphereGeometry args={[1.02, 88, 88]} />
         <meshPhysicalMaterial
@@ -184,6 +240,19 @@ function PlanetMesh({ theme }: { theme: PlanetTheme }) {
           metalness={0.06}
           clearcoat={0.76}
           clearcoatRoughness={0.14}
+        />
+      </mesh>
+
+      <mesh ref={highlightsRef}>
+        <sphereGeometry args={[1.024, 72, 72]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          map={highlightTexture}
+          alphaMap={highlightTexture}
+          transparent
+          opacity={0.06 + glowFactor * 0.34}
+          blending={AdditiveBlending}
+          depthWrite={false}
         />
       </mesh>
 
@@ -208,19 +277,19 @@ function PlanetMesh({ theme }: { theme: PlanetTheme }) {
   );
 }
 
-function OrbitTrails({ theme }: { theme: PlanetTheme }) {
+function OrbitTrails({ theme, orbitSpeedFactor }: { theme: PlanetTheme; orbitSpeedFactor: number }) {
   const ringARef = useRef<Group>(null);
   const ringBRef = useRef<Group>(null);
 
   useFrame((state, delta) => {
     if (ringARef.current) {
-      ringARef.current.rotation.z += delta * 0.28;
-      ringARef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.35) * 0.14;
+      ringARef.current.rotation.z += delta * 0.28 * orbitSpeedFactor;
+      ringARef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.35 * orbitSpeedFactor) * 0.14;
     }
 
     if (ringBRef.current) {
-      ringBRef.current.rotation.z -= delta * 0.2;
-      ringBRef.current.rotation.x = Math.cos(state.clock.elapsedTime * 0.42) * 0.12;
+      ringBRef.current.rotation.z -= delta * 0.2 * orbitSpeedFactor;
+      ringBRef.current.rotation.x = Math.cos(state.clock.elapsedTime * 0.42 * orbitSpeedFactor) * 0.12;
     }
   });
 
@@ -254,16 +323,66 @@ function OrbitTrails({ theme }: { theme: PlanetTheme }) {
 export function PlanetCore({ moodKey }: { moodKey: MoodKey }) {
   const theme = useMemo(() => PLANET_THEMES[moodKey], [moodKey]);
   const [contextLost, setContextLost] = useState(false);
+  const [visualPrefs, setVisualPrefs] = useState<VisualPreferences>({
+    galaxyGlow: DEFAULT_GALAXY_GLOW,
+    nebulaSpeed: DEFAULT_NEBULA_SPEED,
+  });
+
+  const speedPercent = clampPercent(visualPrefs.nebulaSpeed);
+  const orbitSpeedFactor = useMemo(() => 0.28 + (speedPercent / 100) * 1.92, [speedPercent]);
+  const orbitDurationA = useMemo(() => `${(22 - speedPercent * 0.2).toFixed(2)}s`, [speedPercent]);
+  const orbitDurationB = useMemo(() => `${(28 - speedPercent * 0.24).toFixed(2)}s`, [speedPercent]);
 
   useEffect(() => {
     installThreeWarnFilter();
   }, []);
 
+  useEffect(() => {
+    setVisualPrefs(readVisualPreferences());
+
+    const handlePreferenceChange = (event: Event) => {
+      const customEvent = event as CustomEvent<VisualPreferences>;
+      if (customEvent.detail) {
+        setVisualPrefs({
+          galaxyGlow: clampPercent(customEvent.detail.galaxyGlow),
+          nebulaSpeed: clampPercent(customEvent.detail.nebulaSpeed),
+        });
+        return;
+      }
+
+      setVisualPrefs(readVisualPreferences());
+    };
+
+    const handleStorage = () => {
+      setVisualPrefs(readVisualPreferences());
+    };
+
+    const handleVisibilitySync = () => {
+      if (document.visibilityState === "visible") {
+        setVisualPrefs(readVisualPreferences());
+      }
+    };
+
+    window.addEventListener(MV_VISUAL_PREF_EVENT, handlePreferenceChange as EventListener);
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", handleStorage);
+    window.addEventListener("pageshow", handleStorage);
+    document.addEventListener("visibilitychange", handleVisibilitySync);
+
+    return () => {
+      window.removeEventListener(MV_VISUAL_PREF_EVENT, handlePreferenceChange as EventListener);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", handleStorage);
+      window.removeEventListener("pageshow", handleStorage);
+      document.removeEventListener("visibilitychange", handleVisibilitySync);
+    };
+  }, []);
+
   if (contextLost) {
     return (
       <div className="mv-planet-orbit-shell" style={{ ["--planet-trail" as string]: theme.emissive }}>
-        <span className="mv-planet-trail mv-planet-trail-a" />
-        <span className="mv-planet-trail mv-planet-trail-b" />
+        <span className="mv-planet-trail mv-planet-trail-a" style={{ animationDuration: orbitDurationA }} />
+        <span className="mv-planet-trail mv-planet-trail-b" style={{ animationDuration: orbitDurationB }} />
         <div className="mv-capture-planet" style={{ boxShadow: theme.shadow }}>
           <div
             style={{
@@ -281,8 +400,8 @@ export function PlanetCore({ moodKey }: { moodKey: MoodKey }) {
 
   return (
     <div className="mv-planet-orbit-shell" style={{ ["--planet-trail" as string]: theme.emissive }}>
-      <span className="mv-planet-trail mv-planet-trail-a" />
-      <span className="mv-planet-trail mv-planet-trail-b" />
+      <span className="mv-planet-trail mv-planet-trail-a" style={{ animationDuration: orbitDurationA }} />
+      <span className="mv-planet-trail mv-planet-trail-b" style={{ animationDuration: orbitDurationB }} />
       <div className="mv-capture-planet" style={{ boxShadow: theme.shadow }}>
         <Canvas
           dpr={[1, 1.2]}
@@ -308,9 +427,15 @@ export function PlanetCore({ moodKey }: { moodKey: MoodKey }) {
           <directionalLight position={[2.2, 1.5, 2.8]} intensity={0.88} color="#ffffff" />
           <directionalLight position={[-2.4, -0.8, 2.2]} intensity={0.42} color={theme.emissive} />
           <pointLight position={[-2.1, -1.6, 1.4]} intensity={0.62} color={theme.base} />
-          <PlanetMesh theme={theme} />
-          <OrbitTrails theme={theme} />
-          <Sparkles count={14} scale={2.1} size={1.05} speed={0.24} color={theme.emissive} />
+          <PlanetMesh theme={theme} galaxyGlow={visualPrefs.galaxyGlow} orbitSpeedFactor={orbitSpeedFactor} />
+          <OrbitTrails theme={theme} orbitSpeedFactor={orbitSpeedFactor} />
+          <Sparkles
+            count={14}
+            scale={2.1}
+            size={1.05}
+            speed={0.18 + orbitSpeedFactor * 0.13}
+            color={theme.emissive}
+          />
         </Canvas>
       </div>
     </div>

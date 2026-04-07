@@ -1041,6 +1041,55 @@ body {
   opacity: 0.6;
 }
 
+.mv-growth-card {
+  display: grid;
+  gap: 10px;
+}
+
+.mv-growth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mv-growth-item {
+  border-radius: 12px;
+  border: 1px solid rgba(126, 145, 218, 0.22);
+  background: rgba(10, 21, 58, 0.58);
+  padding: 9px 10px;
+  display: grid;
+  gap: 2px;
+}
+
+.mv-growth-item span {
+  color: #9aa8d9;
+  font-size: 10px;
+}
+
+.mv-growth-item strong {
+  color: #f3f6ff;
+  font-size: 14px;
+}
+
+.mv-growth-hint {
+  margin: 0;
+  color: #8d9bcf;
+  font-size: 11px;
+}
+
+.mv-setting-copy {
+  margin: 6px 0 10px;
+  color: #a9b5e2;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mv-setting-import-box {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+}
+
 .mv-modal-overlay {
   position: fixed;
   inset: 0;
@@ -1228,6 +1277,29 @@ body {
   padding-top: 56px;
 }
 
+.mv-capture-fast-card {
+  min-height: auto;
+  padding: 12px;
+  margin-inline: 0;
+  border-radius: 16px;
+  background: linear-gradient(155deg, rgba(28, 45, 98, 0.9), rgba(14, 22, 62, 0.95));
+}
+
+.mv-capture-fast-card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.mv-capture-fast-card p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: #afbbe8;
+}
+
+.mv-capture-fast-card .mv-action-row {
+  margin-top: 9px;
+}
+
 .mv-record-count {
   display: inline-flex;
   align-items: center;
@@ -1279,14 +1351,14 @@ body {
 .mv-planet-trail-a {
   width: 112%;
   height: 112%;
-  animation: mv-planet-orbit-spin-a 9s linear infinite;
+  animation: mv-planet-orbit-spin-a var(--planet-orbit-speed-a, 9s) linear infinite;
 }
 
 .mv-planet-trail-b {
   width: 128%;
   height: 128%;
   opacity: 0.26;
-  animation: mv-planet-orbit-spin-b 12s linear infinite;
+  animation: mv-planet-orbit-spin-b var(--planet-orbit-speed-b, 12s) linear infinite;
 }
 
 .mv-planet-trail::after {

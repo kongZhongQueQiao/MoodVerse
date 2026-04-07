@@ -31,6 +31,7 @@ type MoodApiResponse = {
   success?: boolean;
   count?: number;
   dashboard?: DashboardPayload | null;
+  currentStreak?: number;
 };
 
 const emptyDashboard: DashboardPayload = {
@@ -83,6 +84,7 @@ const metricMeta = [
 export function DashboardSections() {
   const [dashboard, setDashboard] = useState<DashboardPayload>(emptyDashboard);
   const [hasData, setHasData] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -97,10 +99,12 @@ export function DashboardSections() {
         const nextHasData = typeof data.count === "number" && data.count > 0 && !!data.dashboard;
         setHasData(nextHasData);
         setDashboard(data.dashboard ?? emptyDashboard);
+        setCurrentStreak(typeof data.currentStreak === "number" ? data.currentStreak : 0);
       } catch {
         if (active) {
           setHasData(false);
           setDashboard(emptyDashboard);
+          setCurrentStreak(0);
         }
       }
     };
@@ -181,6 +185,22 @@ export function DashboardSections() {
         <h4>星盘分析</h4>
         <p>你在黄昏时段达到最高的创造力模式。</p>
         <Link href="/timeline">查看洞察 →</Link>
+      </article>
+
+      <article className="mv-card mv-inline-info">
+        <h4>连续记录</h4>
+        <p>
+          {hasData
+            ? `你已连续记录 ${currentStreak} 天。继续保持 7 天连击可显著提升稳定性。`
+            : "开始连续记录挑战，先完成第一条心情记录。"}
+        </p>
+        <Link href="/mood/new">继续记录 →</Link>
+      </article>
+
+      <article className="mv-card mv-inline-info">
+        <h4>周复盘触达</h4>
+        <p>每周至少查看一次事件轴，能更快识别触发点并降低回流流失。</p>
+        <Link href="/timeline?entry=weekly-review">查看本周复盘 →</Link>
       </article>
 
       <div className="mv-metrics-grid">

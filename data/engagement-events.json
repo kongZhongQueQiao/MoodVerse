@@ -1,0 +1,74 @@
+[
+  {
+    "id": "58e4f889-c18f-442b-b95d-c85a7fddc32c",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T01:45:35.864Z"
+  },
+  {
+    "id": "b0375646-14b7-4d6c-a19c-b164b4ae7749",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T01:46:38.955Z"
+  },
+  {
+    "id": "077862c6-10b8-495b-b063-c9125dca0f1e",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:00:05.850Z"
+  },
+  {
+    "id": "f6fd4d59-e062-45e3-a340-5885e2097067",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:00:32.683Z"
+  },
+  {
+    "id": "2b6396fb-0089-4dee-a4c6-61f0a6a0f236",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:00:32.735Z"
+  },
+  {
+    "id": "59360c44-b8cf-432f-900e-d99877c6eb92",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:18:42.882Z"
+  },
+  {
+    "id": "ce01cd9b-cf66-46a2-bea6-9c16bec48316",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:18:43.995Z"
+  },
+  {
+    "id": "e2ff805e-cabb-4488-9ec7-603d003d8a54",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:18:46.428Z"
+  },
+  {
+    "id": "ed583c4e-975d-4de8-86a3-15ecc72b7855",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:18:47.899Z"
+  },
+  {
+    "id": "c0804226-49a1-4982-8b79-d8591086e901",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:18:51.231Z"
+  },
+  {
+    "id": "848a3b3e-d2e5-4f13-868e-a94679e90836",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:18:52.450Z"
+  },
+  {
+    "id": "c3b575dc-f353-4102-a974-e921aeaf10d9",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-07T02:26:21.636Z"
+  }
+]

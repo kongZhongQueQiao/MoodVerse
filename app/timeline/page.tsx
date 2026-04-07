@@ -50,6 +50,17 @@ export default function TimelinePage() {
   });
 
   useEffect(() => {
+    void fetch("/api/engagement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "weekly_review_view" }),
+      cache: "no-store",
+    }).catch(() => {
+      // non-blocking tracking
+    });
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     const loadTimeline = async () => {

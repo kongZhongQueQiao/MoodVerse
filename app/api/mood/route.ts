@@ -3,6 +3,7 @@ import { clearMoodRecords, createMoodRecord, readMoodRecords } from "@/app/lib/m
 import { buildDashboardAnalytics, buildMoodAnalytics } from "@/app/lib/mood-analytics";
 import type { MoodKey } from "@/app/lib/mood-meta";
 import { getSessionEmail } from "@/app/lib/auth-session";
+import { calculateCurrentStreak } from "@/app/lib/streak";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
   const latest = records[0] ?? null;
   const analytics = buildMoodAnalytics(records);
   const dashboard = buildDashboardAnalytics(records);
+  const currentStreak = calculateCurrentStreak(records);
 
   return NextResponse.json({
     success: true,
@@ -37,6 +39,7 @@ export async function GET(request: NextRequest) {
       : null,
     analytics,
     dashboard,
+    currentStreak,
   });
 }
 

@@ -6,6 +6,14 @@ import { Range, getTrackBackground } from "react-range";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import {
+  DEFAULT_GALAXY_GLOW,
+  DEFAULT_NEBULA_SPEED,
+  MV_VISUAL_PREF_EVENT,
+  clampPercent,
+  readVisualPreferences,
+  saveVisualPreferences,
+} from "@/app/lib/visual-preferences";
 
 const palette = ["#d893ff", "#00e5ff", "#ff6b9f", "#4f57c9", "#2b8867"];
 
@@ -15,21 +23,113 @@ const settings = [
   { label: "注销账户", action: "deactivate" },
 ] as const;
 
+type ProductMetrics = {
+  firstRecordMinutesMedian: number | null;
+  day7RetentionRate: number | null;
+  medianCurrentStreakDays: number;
+  weeklyReviewViewRate: number | null;
+  import30DayRetentionRate: number | null;
+  samples: {
+    firstRecordUsers: number;
+    day7CohortUsers: number;
+    streakUsers: number;
+    weeklyActiveUsers: number;
+    importCohortUsers: number;
+  };
+};
+
+type ProductMetricsResponse = {
+  success?: boolean;
+  metrics?: ProductMetrics;
+};
+
+const emptyMetrics: ProductMetrics = {
+  firstRecordMinutesMedian: null,
+  day7RetentionRate: null,
+  medianCurrentStreakDays: 0,
+  weeklyReviewViewRate: null,
+  import30DayRetentionRate: null,
+  samples: {
+    firstRecordUsers: 0,
+    day7CohortUsers: 0,
+    streakUsers: 0,
+    weeklyActiveUsers: 0,
+    importCohortUsers: 0,
+  },
+};
+
+const formatRate = (value: number | null) => (value == null ? "--" : `${value.toFixed(1)}%`);
+const formatMinutes = (value: number | null) => (value == null ? "--" : `${Math.round(value)} 分钟`);
+
 export default function SettingsPage() {
   const router = useRouter();
   const [toast, setToast] = useState("");
-  const [galaxyGlow, setGalaxyGlow] = useState(64);
-  const [nebulaSpeed, setNebulaSpeed] = useState(42);
+  const [galaxyGlow, setGalaxyGlow] = useState(DEFAULT_GALAXY_GLOW);
+  const [nebulaSpeed, setNebulaSpeed] = useState(DEFAULT_NEBULA_SPEED);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isClearingData, setIsClearingData] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [showClearDataModal, setShowClearDataModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+  const [importPayload, setImportPayload] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [isMetricsLoading, setIsMetricsLoading] = useState(false);
+  const [metrics, setMetrics] = useState<ProductMetrics>(emptyMetrics);
 
   useEffect(() => {
     setMounted(true);
+
+    const preferences = readVisualPreferences();
+    setGalaxyGlow(preferences.galaxyGlow);
+    setNebulaSpeed(preferences.nebulaSpeed);
+    setPrefsLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (!prefsLoaded) return;
+
+    const payload = {
+      galaxyGlow: clampPercent(galaxyGlow),
+      nebulaSpeed: clampPercent(nebulaSpeed),
+    };
+
+    saveVisualPreferences(payload);
+    window.dispatchEvent(new CustomEvent(MV_VISUAL_PREF_EVENT, { detail: payload }));
+  }, [galaxyGlow, nebulaSpeed, prefsLoaded]);
+
+  const loadMetrics = async () => {
+    setIsMetricsLoading(true);
+
+    try {
+      const response = await fetch(`/api/metrics?ts=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) return;
+
+      const data = (await response.json()) as ProductMetricsResponse;
+      if (data.success && data.metrics) {
+        setMetrics(data.metrics);
+      }
+    } catch {
+      // keep previous metrics snapshot
+    } finally {
+      setIsMetricsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadMetrics();
+  }, []);
+
+  const handleGalaxyGlowChange = (values: number[]) => {
+    const nextGlow = values[0] ?? 0;
+    setGalaxyGlow(nextGlow);
+  };
+
+  const handleNebulaSpeedChange = (values: number[]) => {
+    const nextSpeed = values[0] ?? 0;
+    setNebulaSpeed(nextSpeed);
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -145,6 +245,71 @@ export default function SettingsPage() {
     }, 1800);
   };
 
+  const handleImportRecords = async () => {
+    if (isImporting) return;
+
+    const sourceText = importPayload.trim();
+    if (!sourceText) {
+      setToast("请先粘贴导入 JSON");
+      return;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(sourceText);
+    } catch {
+      setToast("JSON 格式不正确");
+      return;
+    }
+
+    const records = Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === "object" && Array.isArray((parsed as { records?: unknown[] }).records)
+        ? (parsed as { records: unknown[] }).records
+        : null;
+
+    if (!records || records.length === 0) {
+      setToast("未检测到可导入的 records 数组");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const response = await fetch("/api/mood/import", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source: "moo-diary",
+          records,
+        }),
+      });
+
+      const result = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        importedCount?: number;
+      };
+
+      if (!response.ok || !result.success) {
+        setToast(result.message ?? "导入失败，请重试");
+        return;
+      }
+
+      setToast(`导入完成，新增 ${result.importedCount ?? 0} 条`);
+      setImportPayload("");
+      await loadMetrics();
+    } catch {
+      setToast("导入失败，请重试");
+    } finally {
+      setIsImporting(false);
+      window.setTimeout(() => {
+        setToast("");
+      }, 2200);
+    }
+  };
+
   return (
     <AppShell title="系统配置" subtitle="个性化你的星系体验设置。">
       <article className="mv-card">
@@ -162,7 +327,7 @@ export default function SettingsPage() {
             min={0}
             max={100}
             values={[galaxyGlow]}
-            onChange={(values) => setGalaxyGlow(values[0] ?? 0)}
+            onChange={handleGalaxyGlowChange}
             renderTrack={({ props, children }) => (
               <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
                 <div
@@ -212,7 +377,7 @@ export default function SettingsPage() {
             min={0}
             max={100}
             values={[nebulaSpeed]}
-            onChange={(values) => setNebulaSpeed(values[0] ?? 0)}
+            onChange={handleNebulaSpeedChange}
             renderTrack={({ props, children }) => (
               <div className="mv-capture-range-track-wrap" onMouseDown={props.onMouseDown} onTouchStart={props.onTouchStart}>
                 <div
@@ -280,6 +445,59 @@ export default function SettingsPage() {
         <div className="mv-action-row">
           <button className="mv-btn mv-btn-primary" onClick={handleMeditationMode}>冥想模式</button>
           <button className="mv-btn mv-btn-ghost" onClick={handleTimedWakeup}>定时唤醒</button>
+        </div>
+      </article>
+
+      <article className="mv-card mv-growth-card">
+        <h3>增长指标看板</h3>
+        <div className="mv-growth-grid">
+          <div className="mv-growth-item">
+            <span>首次记录中位时长</span>
+            <strong>{formatMinutes(metrics.firstRecordMinutesMedian)}</strong>
+          </div>
+          <div className="mv-growth-item">
+            <span>第 7 天留存</span>
+            <strong>{formatRate(metrics.day7RetentionRate)}</strong>
+          </div>
+          <div className="mv-growth-item">
+            <span>连续记录中位天数</span>
+            <strong>{metrics.medianCurrentStreakDays} 天</strong>
+          </div>
+          <div className="mv-growth-item">
+            <span>周复盘查看率</span>
+            <strong>{formatRate(metrics.weeklyReviewViewRate)}</strong>
+          </div>
+          <div className="mv-growth-item">
+            <span>导入用户 30 天留存</span>
+            <strong>{formatRate(metrics.import30DayRetentionRate)}</strong>
+          </div>
+        </div>
+        <p className="mv-growth-hint">
+          {isMetricsLoading
+            ? "指标加载中..."
+            : `样本：首次${metrics.samples.firstRecordUsers} · D7${metrics.samples.day7CohortUsers} · 周活跃${metrics.samples.weeklyActiveUsers}`}
+        </p>
+      </article>
+
+      <article className="mv-card">
+        <h3>数据迁移</h3>
+        <p className="mv-setting-copy">粘贴导出的 JSON（支持 records 数组）以迁移历史情绪记录。</p>
+        <textarea
+          className="mv-note-box mv-setting-import-box"
+          rows={5}
+          placeholder='示例: {"records":[{"mood":"joy","heartRate":72,"sleep":75,"energy":80,"stability":88,"note":"...","tags":["工作"],"createdAt":"2026-03-20T09:00:00.000Z"}]}'
+          value={importPayload}
+          onChange={(event) => setImportPayload(event.target.value)}
+        />
+        <div className="mv-action-row">
+          <button
+            type="button"
+            className="mv-btn mv-btn-primary"
+            onClick={() => void handleImportRecords()}
+            disabled={isImporting}
+          >
+            {isImporting ? "导入中..." : "导入历史记录"}
+          </button>
         </div>
       </article>
 
