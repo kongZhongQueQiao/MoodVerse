@@ -197,3 +197,8 @@
 ![image-20260407101111950](assets/image-20260407101111950.png)
 
 ![image-20260407101404454](assets/image-20260407101404454.png)
+
+```
+New-NetFirewallRule -DisplayName MoodVerse-3000 -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow
+```
+
