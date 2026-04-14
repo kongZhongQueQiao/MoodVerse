@@ -1,6 +1,33 @@
 {
   "example@gmail.com": [
     {
+      "id": "a5e0bb76-d04c-4f0d-9590-253d44211a96",
+      "createdAt": "2026-04-07T02:44:11.031Z",
+      "mood": "sad",
+      "heartRate": 84,
+      "sleep": 72,
+      "energy": 84,
+      "stability": 94,
+      "note": "lalallal",
+      "tags": [
+        "工作",
+        "睡眠"
+      ]
+    },
+    {
+      "id": "055a29a1-e1e8-4f77-84cf-8dffc4e3c1bd",
+      "createdAt": "2026-04-07T02:42:42.287Z",
+      "mood": "joy",
+      "heartRate": 72,
+      "sleep": 70,
+      "energy": 76,
+      "stability": 82,
+      "note": "快速记录",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
       "id": "a9b30c70-13a0-442d-8e9c-16a4819b3e2e",
       "createdAt": "2026-04-07T02:27:18.661Z",
       "mood": "calm",

@@ -202,3 +202,24 @@
 New-NetFirewallRule -DisplayName MoodVerse-3000 -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow
 ```
 
+
+
+# ngork
+
+![image-20260409090731785](assets/image-20260409090731785.png)
+
+![image-20260409090742490](assets/image-20260409090742490.png)
+
+## 示例
+
+![image-20260409090824339](assets/image-20260409090824339.png)
+
+![image-20260409090841304](assets/image-20260409090841304.png)
+
+![image-20260409091412398](assets/image-20260409091412398.png)
+
+![image-20260409091601877](assets/image-20260409091601877.png)
+
+![image-20260409091635492](assets/image-20260409091635492.png)
+
+![image-20260409091727540](assets/image-20260409091727540.png)
