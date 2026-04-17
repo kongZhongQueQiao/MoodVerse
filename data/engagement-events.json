@@ -190,5 +190,41 @@
     "email": "example@gmail.com",
     "type": "weekly_review_view",
     "createdAt": "2026-04-14T03:14:46.755Z"
+  },
+  {
+    "id": "45847326-c5b3-4f56-bbb3-bd49a454d78e",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-16T02:03:07.383Z"
+  },
+  {
+    "id": "445314e4-596e-4eff-b544-c563f6472606",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-17T00:51:20.750Z"
+  },
+  {
+    "id": "3a8a7b59-6491-4b1c-9871-9a68c14cab1c",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-17T01:00:11.944Z"
+  },
+  {
+    "id": "19017378-4366-4707-a85e-51d892ce5817",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-17T01:00:11.997Z"
+  },
+  {
+    "id": "2e089c4d-a4d6-40ec-a094-571b072a3393",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-17T01:02:29.269Z"
+  },
+  {
+    "id": "eb842086-0158-42b4-bb92-eff13bfe79de",
+    "email": "example@gmail.com",
+    "type": "weekly_review_view",
+    "createdAt": "2026-04-17T01:02:29.346Z"
   }
 ]

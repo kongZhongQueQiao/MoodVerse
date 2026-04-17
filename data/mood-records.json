@@ -1,6 +1,19 @@
 {
   "example@gmail.com": [
     {
+      "id": "04ec2a2d-0cad-4c65-8a4d-6b5f3de24bf0",
+      "createdAt": "2026-04-16T02:02:20.953Z",
+      "mood": "focus",
+      "heartRate": 72,
+      "sleep": 70,
+      "energy": 76,
+      "stability": 82,
+      "note": "快速记录",
+      "tags": [
+        "工作"
+      ]
+    },
+    {
       "id": "8f5cebba-6ce5-464c-86c7-92121bead06f",
       "createdAt": "2026-04-14T03:14:04.193Z",
       "mood": "focus",
